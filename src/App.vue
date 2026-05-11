@@ -1,19 +1,32 @@
 <template>
   <div class="flex h-screen w-full items-center justify-center bg-[#282c33]">
-    <div class="flex items-center justify-center rounded-3xl bg-[#abb2bf] p-12">
-      <canvas ref="canvasRef" :width="CANVAS_W" :height="CANVAS_H" />
+    <div
+      class="relative flex items-center justify-center rounded-3xl border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 p-12 shadow-xl"
+    >
+      <canvas ref="canvasRef" :width="canvasW" :height="canvasH" />
+      <svg
+        class="absolute right-3 bottom-3 cursor-se-resize opacity-40 transition-opacity hover:opacity-80"
+        width="20"
+        height="20"
+        viewBox="-2 -2 24 24"
+        @mousedown="onHandleMouseDown"
+      >
+        <path d="M 20 6 A 14 14 0 0 1 6 20" fill="none" stroke="#282c33" stroke-width="3.5" stroke-linecap="round" />
+      </svg>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 const PIXEL_SIZE = 4
-const CANVAS_W = 480
-const CANVAS_H = 480
+const MIN_SIZE = 80
+
+const canvasW = ref(480)
+const canvasH = ref(480)
 
 // prettier-ignore
 const BAYER_8 = [
@@ -31,14 +44,15 @@ function bayerThreshold(x: number, y: number): number {
   return BAYER_8[(y % 8) * 8 + (x % 8)] / 64
 }
 
-onMounted(() => {
-  const canvas = canvasRef.value!
+function render() {
+  const canvas = canvasRef.value
+  if (!canvas) return
   const ctx = canvas.getContext('2d')!
+  const W = canvasW.value
+  const H = canvasH.value
+  const w = W / PIXEL_SIZE
+  const h = H / PIXEL_SIZE
 
-  const w = CANVAS_W / PIXEL_SIZE
-  const h = CANVAS_H / PIXEL_SIZE
-
-  // Draw gradient circle at low res
   const off = document.createElement('canvas')
   off.width = w
   off.height = h
@@ -59,19 +73,56 @@ onMounted(() => {
 
   const { data } = offCtx.getImageData(0, 0, w, h)
 
-  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H)
+  ctx.clearRect(0, 0, W, H)
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4
       if (data[i + 3] < 128) continue
-
       const lum = data[i] / 255
-      const isWhite = lum > bayerThreshold(x, y)
-      if (isWhite) continue
+      if (lum > bayerThreshold(x, y)) continue
       ctx.fillStyle = '#000000'
       ctx.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE)
     }
   }
+}
+
+let dragging = false
+let startX = 0
+let startY = 0
+let startW = 0
+let startH = 0
+
+function onHandleMouseDown(e: MouseEvent) {
+  dragging = true
+  startX = e.clientX
+  startY = e.clientY
+  startW = canvasW.value
+  startH = canvasH.value
+  e.preventDefault()
+}
+
+function onMouseMove(e: MouseEvent) {
+  if (!dragging) return
+  const snap = (v: number) => Math.round(v / PIXEL_SIZE) * PIXEL_SIZE
+  canvasW.value = Math.max(MIN_SIZE, snap(startW + e.clientX - startX))
+  canvasH.value = Math.max(MIN_SIZE, snap(startH + e.clientY - startY))
+}
+
+function onMouseUp() {
+  dragging = false
+}
+
+watch([canvasW, canvasH], () => nextTick(render))
+
+onMounted(() => {
+  render()
+  document.addEventListener('mousemove', onMouseMove)
+  document.addEventListener('mouseup', onMouseUp)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('mousemove', onMouseMove)
+  document.removeEventListener('mouseup', onMouseUp)
 })
 </script>
