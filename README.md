@@ -1,8 +1,23 @@
-# Vue 3 + TypeScript + Vite
+# Dithr
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Small, fun dithering toy.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+Pick a shape, text, or image; pick Bayer or blue noise; pick gradient direction; render solid or outline. Play with the canvas size.
+
+## Stack
+
+Vue 3 + TypeScript + Tailwind 4, Vite+ toolchain (`vp` CLI).
+
+## Commands
+
+- `vp install` — deps
+- `vp dev` — dev server
+- `vp build` — prod build
+- `vp check` / `vp check --fix` — format + lint + typecheck
+
+## License
+
+CC BY 4.0
 
 ## Credits
 

@@ -1,3 +1,16 @@
+# dithr
+
+Small, fun dithering SPA. Pick shape/text/image, pick Bayer or blue noise, pick gradient direction, render solid or outline. Resizable canvas.
+
+## Structure
+
+- `src/App.vue` — root, holds all state.
+- `src/components/DitherCanvas.vue` — canvas, render loop, alpha-mask + threshold + gradient ramp.
+- `src/components/shapes.ts` — primitive draw fns (circle, yinyang, illuminati, pentagram).
+- `src/components/ToggleSwitch.vue` — reusable pill switch (scoped slot for icons).
+- `src/components/*Toggle.vue` — icon toggles built on ToggleSwitch (DitherMode, Gradient, RenderStyle, ContentType).
+- `src/components/{ShapePicker,TextInput,ImagePicker}.vue` — content input panels below canvas.
+
 <!--VITE PLUS START-->
 
 # Using Vite+, the Unified Toolchain for the Web
