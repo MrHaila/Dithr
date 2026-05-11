@@ -11,7 +11,8 @@
           "run": "onType",
           "disableNestedConfig": false,
           "fixKind": "safe_fix",
-          "unusedDisableDirectives": "deny"
+          "unusedDisableDirectives": "deny",
+          "typeAware": true
         }
       }
     },
@@ -19,7 +20,8 @@
       "initialization_options": {
         "settings": {
           "fmt.configPath": null,
-          "run": "onSave"
+          "run": "onSave",
+          "configPath": "./vite.config.ts"
         }
       }
     }
@@ -65,7 +67,8 @@
         {
           "code_action": "source.fixAll.oxc"
         }
-      ]
+      ],
+      "code_action": "source.fixAll.oxc"
     },
     "JSON": {
       "format_on_save": "on",
@@ -146,6 +149,97 @@
       ]
     },
     "YAML": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt"
+          }
+        }
+      ]
+    },
+    "GraphQL": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt"
+          }
+        }
+      ]
+    },
+    "Handlebars": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt"
+          }
+        }
+      ]
+    },
+    "JSX": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt"
+          }
+        }
+      ]
+    },
+    "JSON5": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt"
+          }
+        }
+      ]
+    },
+    "Less": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt"
+          }
+        }
+      ]
+    },
+    "MDX": {
+      "format_on_save": "on",
+      "prettier": {
+        "allowed": false
+      },
+      "formatter": [
+        {
+          "language_server": {
+            "name": "oxfmt"
+          }
+        }
+      ]
+    },
+    "SCSS": {
       "format_on_save": "on",
       "prettier": {
         "allowed": false
