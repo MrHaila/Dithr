@@ -1,6 +1,11 @@
 <template>
   <div
-    class="relative flex items-center justify-center rounded-3xl border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 p-6 shadow-xl"
+    class="relative flex items-center justify-center rounded-3xl p-6 transition-colors"
+    :class="
+      renderStyle === 'solid'
+        ? 'border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 shadow-xl'
+        : 'border-4 border-gray-400'
+    "
   >
     <canvas ref="canvasRef" :width="canvasW" :height="canvasH" />
     <svg
@@ -10,7 +15,13 @@
       viewBox="-2 -2 24 24"
       @mousedown="onHandleMouseDown"
     >
-      <path d="M 20 6 A 14 14 0 0 1 6 20" fill="none" stroke="#282c33" stroke-width="3.5" stroke-linecap="round" />
+      <path
+        d="M 20 6 A 14 14 0 0 1 6 20"
+        fill="none"
+        :stroke="renderStyle === 'solid' ? '#282c33' : '#9ca3af'"
+        stroke-width="3.5"
+        stroke-linecap="round"
+      />
     </svg>
   </div>
 </template>
@@ -22,6 +33,7 @@ import blueNoiseUrl from '../assets/blue-noise-128.png'
 import type { ContentType } from './ContentTypeToggle.vue'
 import type { DitherMode } from './DitherModeToggle.vue'
 import type { Gradient } from './GradientToggle.vue'
+import type { RenderStyle } from './RenderStyleToggle.vue'
 
 const props = defineProps<{
   mode: DitherMode
@@ -29,6 +41,7 @@ const props = defineProps<{
   text: string
   imageSrc: string | null
   gradient: Gradient
+  renderStyle: RenderStyle
 }>()
 
 const PIXEL_SIZE = 4
@@ -165,7 +178,7 @@ function render() {
       const i = (y * w + x) * 4
       if (data[i + 3] < 128) continue
       if (lum > threshold(x, y)) continue
-      ctx.fillStyle = '#27272a'
+      ctx.fillStyle = props.renderStyle === 'solid' ? '#27272a' : '#9ca3af'
       ctx.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE)
     }
   }
@@ -214,8 +227,17 @@ function onMouseUp() {
   dragging = false
 }
 
-watch([canvasW, canvasH, () => props.mode, () => props.content, () => props.text, () => props.gradient], () =>
-  nextTick(render),
+watch(
+  [
+    canvasW,
+    canvasH,
+    () => props.mode,
+    () => props.content,
+    () => props.text,
+    () => props.gradient,
+    () => props.renderStyle,
+  ],
+  () => nextTick(render),
 )
 
 onMounted(() => {
