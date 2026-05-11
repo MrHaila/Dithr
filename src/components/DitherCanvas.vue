@@ -34,6 +34,8 @@ import type { ContentType } from './ContentTypeToggle.vue'
 import type { DitherMode } from './DitherModeToggle.vue'
 import type { Gradient } from './GradientToggle.vue'
 import type { RenderStyle } from './RenderStyleToggle.vue'
+import type { Shape } from './ShapePicker.vue'
+import { drawShape } from './shapes'
 
 const props = defineProps<{
   mode: DitherMode
@@ -42,6 +44,7 @@ const props = defineProps<{
   imageSrc: string | null
   gradient: Gradient
   renderStyle: RenderStyle
+  shape: Shape
 }>()
 
 const PIXEL_SIZE = 4
@@ -90,16 +93,6 @@ function loadBlueNoise() {
     blueTile.value = out
     render()
   })
-}
-
-function drawCircle(offCtx: CanvasRenderingContext2D, w: number, h: number) {
-  const cx = w / 2
-  const cy = h / 2
-  const r = Math.min(w, h) * 0.45
-  offCtx.fillStyle = '#ffffff'
-  offCtx.beginPath()
-  offCtx.arc(cx, cy, r, 0, Math.PI * 2)
-  offCtx.fill()
 }
 
 function drawText(offCtx: CanvasRenderingContext2D, w: number, h: number) {
@@ -157,7 +150,7 @@ function render() {
   off.height = h
   const offCtx = off.getContext('2d')!
 
-  if (props.content === 'circle') drawCircle(offCtx, w, h)
+  if (props.content === 'shape') drawShape(offCtx, props.shape, w, h)
   else if (props.content === 'text') drawText(offCtx, w, h)
   else drawImage(offCtx, w, h)
 
@@ -236,6 +229,7 @@ watch(
     () => props.text,
     () => props.gradient,
     () => props.renderStyle,
+    () => props.shape,
   ],
   () => nextTick(render),
 )

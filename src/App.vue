@@ -7,9 +7,11 @@
       :image-src="imageSrc"
       :gradient="gradient"
       :render-style="renderStyle"
+      :shape="shape"
     />
-    <TextInput v-if="content === 'text'" v-model="text" placeholder="DITHR" />
-    <ImagePicker v-else-if="content === 'image'" @pick="imageSrc = $event" />
+    <ShapePicker v-if="content === 'shape'" v-model="shape" />
+    <TextInput v-else-if="content === 'text'" v-model="text" placeholder="DITHR" />
+    <ImagePicker v-else @pick="imageSrc = $event" />
     <div class="fixed bottom-4 left-4 flex gap-2">
       <DitherModeToggle v-model="mode" />
       <GradientToggle v-model="gradient" />
@@ -28,12 +30,14 @@ import DitherModeToggle, { type DitherMode } from './components/DitherModeToggle
 import GradientToggle, { type Gradient } from './components/GradientToggle.vue'
 import ImagePicker from './components/ImagePicker.vue'
 import RenderStyleToggle, { type RenderStyle } from './components/RenderStyleToggle.vue'
+import ShapePicker, { type Shape } from './components/ShapePicker.vue'
 import TextInput from './components/TextInput.vue'
 
 const mode = ref<DitherMode>('bayer')
-const content = ref<ContentType>('circle')
-const text = ref('DITHR')
+const content = ref<ContentType>('shape')
+const text = ref('Dithr')
 const imageSrc = ref<string | null>(null)
 const gradient = ref<Gradient>('top')
 const renderStyle = ref<RenderStyle>('solid')
+const shape = ref<Shape>('circle')
 </script>
