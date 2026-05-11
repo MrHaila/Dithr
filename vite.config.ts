@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite-plus'
 
@@ -33,5 +34,5 @@ export default defineConfig({
     },
     ignorePatterns: ['src/env.d.ts'],
   },
-  plugins: [vue()],
+  plugins: [vue(), tailwindcss()],
 })
