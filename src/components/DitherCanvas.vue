@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative flex items-center justify-center rounded-3xl border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 p-12 shadow-xl"
+    class="relative flex items-center justify-center rounded-3xl border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 p-6 shadow-xl"
   >
     <canvas ref="canvasRef" :width="canvasW" :height="canvasH" />
     <svg
@@ -19,10 +19,16 @@
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import blueNoiseUrl from '../assets/blue-noise-128.png'
+import type { ContentType } from './ContentTypeToggle.vue'
 import type { DitherMode } from './DitherModeToggle.vue'
+import type { Gradient } from './GradientToggle.vue'
 
 const props = defineProps<{
   mode: DitherMode
+  content: ContentType
+  text: string
+  imageSrc: string | null
+  gradient: Gradient
 }>()
 
 const PIXEL_SIZE = 4
@@ -33,6 +39,7 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 const canvasW = ref(480)
 const canvasH = ref(480)
 const blueTile = ref<Uint8Array | null>(null)
+const loadedImage = ref<HTMLImageElement | null>(null)
 
 // prettier-ignore
 const BAYER_8 = [
@@ -72,6 +79,56 @@ function loadBlueNoise() {
   })
 }
 
+function drawCircle(offCtx: CanvasRenderingContext2D, w: number, h: number) {
+  const cx = w / 2
+  const cy = h / 2
+  const r = Math.min(w, h) * 0.45
+  offCtx.fillStyle = '#ffffff'
+  offCtx.beginPath()
+  offCtx.arc(cx, cy, r, 0, Math.PI * 2)
+  offCtx.fill()
+}
+
+function drawText(offCtx: CanvasRenderingContext2D, w: number, h: number) {
+  const text = props.text || ''
+  if (!text) return
+  offCtx.fillStyle = '#000000'
+  offCtx.textAlign = 'center'
+  offCtx.textBaseline = 'middle'
+  let fontSize = Math.floor(h * 0.5)
+  offCtx.font = `900 ${fontSize}px sans-serif`
+  const maxWidth = w * 0.9
+  while (fontSize > 4 && offCtx.measureText(text).width > maxWidth) {
+    fontSize -= 1
+    offCtx.font = `900 ${fontSize}px sans-serif`
+  }
+  offCtx.fillText(text, w / 2, h / 2)
+}
+
+function drawImage(offCtx: CanvasRenderingContext2D, w: number, h: number) {
+  const img = loadedImage.value
+  if (!img) return
+  const scale = Math.min(w / img.width, h / img.height) * 0.9
+  const dw = img.width * scale
+  const dh = img.height * scale
+  offCtx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh)
+}
+
+function verticalBounds(data: Uint8ClampedArray, w: number, h: number): [number, number] {
+  let minY = h
+  let maxY = -1
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (data[(y * w + x) * 4 + 3] >= 128) {
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+        break
+      }
+    }
+  }
+  return [minY, maxY]
+}
+
 function render() {
   const canvas = canvasRef.value
   if (!canvas) return
@@ -87,36 +144,49 @@ function render() {
   off.height = h
   const offCtx = off.getContext('2d')!
 
-  const cx = w / 2
-  const cy = h / 2
-  const r = Math.min(w, h) * 0.45
-
-  const grad = offCtx.createLinearGradient(cx, cy - r, cx, cy + r)
-  grad.addColorStop(0, '#ffffff')
-  grad.addColorStop(1, '#000000')
-
-  offCtx.fillStyle = grad
-  offCtx.beginPath()
-  offCtx.arc(cx, cy, r, 0, Math.PI * 2)
-  offCtx.fill()
+  if (props.content === 'circle') drawCircle(offCtx, w, h)
+  else if (props.content === 'text') drawText(offCtx, w, h)
+  else drawImage(offCtx, w, h)
 
   const { data } = offCtx.getImageData(0, 0, w, h)
 
   ctx.clearRect(0, 0, W, H)
 
   const threshold = props.mode === 'bayer' ? bayerThreshold : blueThreshold
+  const gradient = props.gradient
+
+  const [minY, maxY] = verticalBounds(data, w, h)
+  const span = Math.max(1, maxY - minY)
 
   for (let y = 0; y < h; y++) {
+    const t = (y - minY) / span
+    const lum = gradient === 'off' ? 0 : gradient === 'top' ? 1 - t : t
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4
       if (data[i + 3] < 128) continue
-      const lum = data[i] / 255
       if (lum > threshold(x, y)) continue
-      ctx.fillStyle = '#000000'
+      ctx.fillStyle = '#27272a'
       ctx.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE)
     }
   }
 }
+
+watch(
+  () => props.imageSrc,
+  (src) => {
+    if (!src) {
+      loadedImage.value = null
+      return
+    }
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.src = src
+    img.addEventListener('load', () => {
+      loadedImage.value = img
+      render()
+    })
+  },
+)
 
 let dragging = false
 let startX = 0
@@ -144,7 +214,9 @@ function onMouseUp() {
   dragging = false
 }
 
-watch([canvasW, canvasH, () => props.mode], () => nextTick(render))
+watch([canvasW, canvasH, () => props.mode, () => props.content, () => props.text, () => props.gradient], () =>
+  nextTick(render),
+)
 
 onMounted(() => {
   loadBlueNoise()
