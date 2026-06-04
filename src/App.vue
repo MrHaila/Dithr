@@ -1,6 +1,7 @@
 <template>
   <div
-    class="relative flex min-h-dvh w-full flex-col items-center justify-start gap-3 bg-zinc-800 p-4 pb-40 sm:justify-center sm:gap-6 sm:p-0 sm:pb-0"
+    class="relative flex min-h-dvh w-full flex-col items-center justify-start gap-3 bg-zinc-800 p-4 pb-[calc(var(--bar-h,10rem)+0.75rem)] sm:justify-center sm:gap-6 sm:p-0 sm:pb-0"
+    :style="barH ? { '--bar-h': barH } : undefined"
     @dragenter.prevent="onDragEnter"
     @dragover.prevent="onDragOver"
     @dragleave="onDragLeave"
@@ -41,6 +42,7 @@
       return to their original fixed bottom-left / bottom-right corners.
     -->
     <div
+      ref="controlBar"
       class="fixed inset-x-0 bottom-0 z-10 flex flex-wrap items-center justify-center gap-2 bg-zinc-800/85 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-sm sm:contents"
     >
       <div class="contents sm:fixed sm:bottom-4 sm:left-4 sm:flex sm:items-stretch sm:gap-2">
@@ -75,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 
 import BevelButton from './components/BevelButton.vue'
 import ContentTypeToggle, { type ContentType } from './components/ContentTypeToggle.vue'
@@ -104,6 +106,25 @@ const dragState = ref<'none' | 'valid' | 'invalid'>('none')
 
 const dither = useTemplateRef<InstanceType<typeof DitherCanvas>>('dither')
 const exportModal = useTemplateRef<InstanceType<typeof ExportModal>>('exportModal')
+
+// Mobile reserves bottom padding equal to the fixed control bar's *actual* height
+// so the last in-flow content (the museum label) is never trapped behind it. The
+// bar wraps to a variable number of rows depending on width, so we measure rather
+// than hardcode. `--bar-h` feeds the root's `pb-[calc(...)]`; desktop overrides it
+// with `sm:pb-0`, where the bar is `display:contents` and reports no useful height.
+const controlBar = useTemplateRef<HTMLElement>('controlBar')
+const barH = ref<string>()
+let barObserver: ResizeObserver | undefined
+onMounted(() => {
+  const el = controlBar.value
+  if (!el) return
+  barObserver = new ResizeObserver(([entry]) => {
+    const h = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height
+    barH.value = h > 0 ? `${Math.ceil(h)}px` : undefined
+  })
+  barObserver.observe(el)
+})
+onBeforeUnmount(() => barObserver?.disconnect())
 
 function openExport() {
   const el = dither.value?.el
