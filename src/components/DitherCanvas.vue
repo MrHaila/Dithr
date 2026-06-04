@@ -8,6 +8,7 @@
     "
   >
     <canvas ref="canvasRef" :width="canvasW" :height="canvasH" class="block" role="img" :aria-label="ariaLabel" />
+    <DropOverlay v-if="overlay" :state="overlay" :dark="renderStyle !== 'solid'" />
     <button
       type="button"
       class="fbrackets absolute right-1 bottom-1 flex h-11 w-11 cursor-se-resize touch-none items-center justify-center rounded-full opacity-60 transition-opacity select-none hover:opacity-90 focus:outline-none focus-visible:opacity-100 sm:opacity-40"
@@ -38,6 +39,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import blueNoiseUrl from '../assets/blue-noise-128.png'
 import type { ContentType } from './ContentTypeToggle.vue'
 import type { DitherMode } from './DitherModeToggle.vue'
+import DropOverlay from './DropOverlay.vue'
 import type { Gradient } from './GradientToggle.vue'
 import type { RenderStyle } from './RenderStyleToggle.vue'
 import type { Shape } from './ShapePicker.vue'
@@ -51,6 +53,7 @@ const props = defineProps<{
   gradient: Gradient
   renderStyle: RenderStyle
   shape: Shape
+  overlay?: 'hint' | 'valid' | 'invalid' | null
 }>()
 
 const emit = defineEmits<{
@@ -91,10 +94,7 @@ function availSize(): { w: number; h: number } {
   const reservedH = isMobile ? 360 : 120
   const vw = window.visualViewport?.width ?? window.innerWidth
   const vh = window.visualViewport?.height ?? window.innerHeight
-  return {
-    w: snapSize(vw - panelPad - gutter),
-    h: snapSize(vh - panelPad - reservedH),
-  }
+  return { w: snapSize(vw - panelPad - gutter), h: snapSize(vh - panelPad - reservedH) }
 }
 
 // Pick a default canvas size that fits the viewport (capped at the 480 design max).
@@ -331,4 +331,7 @@ onUnmounted(() => {
   window.removeEventListener('resize', onViewportResize)
   window.visualViewport?.removeEventListener('resize', onViewportResize)
 })
+
+// Surface the live canvas element so the export dialog can read its pixels.
+defineExpose({ el: canvasRef })
 </script>

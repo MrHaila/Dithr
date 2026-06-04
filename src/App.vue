@@ -1,11 +1,16 @@
 <template>
   <div
     class="flex min-h-dvh w-full flex-col items-center justify-start gap-3 bg-zinc-800 p-4 pb-40 sm:justify-center sm:gap-6 sm:p-0 sm:pb-0"
+    @dragenter.prevent="onDragEnter"
+    @dragover.prevent="onDragOver"
+    @dragleave="onDragLeave"
+    @drop.prevent="onDrop"
   >
     <h1 class="sr-only">Dithr — dithering playground</h1>
     <!-- w-fit shrinks this box to the canvas so the desktop label can hang off its right edge. -->
     <div class="relative w-fit">
       <DitherCanvas
+        ref="dither"
         :mode="mode"
         :content="content"
         :text="text"
@@ -13,6 +18,7 @@
         :gradient="gradient"
         :render-style="renderStyle"
         :shape="shape"
+        :overlay="overlay"
         @resize="onResize"
       />
       <!-- Desktop: hang the label off the canvas' right edge, bottom-aligned, out of flow. -->
@@ -20,7 +26,7 @@
     </div>
     <ShapePicker v-if="content === 'shape'" v-model="shape" />
     <TextInput v-else-if="content === 'text'" v-model="text" placeholder="DITHR" />
-    <ImagePicker v-else @pick="onPick" />
+    <ImagePicker v-else :name="imageName" @pick="setImage" />
     <!-- Mobile: label collapses below the content controls, right-aligned to match the controls' gutter. -->
     <div class="flex w-full justify-end sm:px-4 lg:hidden">
       <MuseumLabel v-bind="labelProps" />
@@ -34,22 +40,45 @@
     <div
       class="fixed inset-x-0 bottom-0 z-10 flex flex-wrap items-center justify-center gap-2 bg-zinc-800/85 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-sm sm:contents"
     >
-      <div class="contents sm:fixed sm:bottom-4 sm:left-4 sm:flex sm:gap-2">
+      <div class="contents sm:fixed sm:bottom-4 sm:left-4 sm:flex sm:items-stretch sm:gap-2">
         <DitherModeToggle v-model="mode" />
         <GradientToggle v-model="gradient" />
         <RenderStyleToggle v-model="renderStyle" />
+        <!-- Export action. Joins the render-toggle cluster (bottom-left on desktop);
+             self-stretch matches the pill height in both the mobile bar and the desktop row. -->
+        <BevelButton class="self-stretch" aria-haspopup="dialog" @click="openExport">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 3 v11" />
+            <path d="M8 7 l4 -4 l4 4" />
+            <path d="M6 11 H5.5 a2 2 0 0 0 -2 2 V19 a2 2 0 0 0 2 2 H18.5 a2 2 0 0 0 2 -2 V13 a2 2 0 0 0 -2 -2 H18" />
+          </svg>
+          Export
+        </BevelButton>
       </div>
       <ContentTypeToggle v-model="content" class="sm:fixed sm:right-4 sm:bottom-4" />
     </div>
+    <ExportModal ref="exportModal" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 
+import BevelButton from './components/BevelButton.vue'
 import ContentTypeToggle, { type ContentType } from './components/ContentTypeToggle.vue'
 import DitherCanvas from './components/DitherCanvas.vue'
 import DitherModeToggle, { type DitherMode } from './components/DitherModeToggle.vue'
+import ExportModal from './components/ExportModal.vue'
 import GradientToggle, { type Gradient } from './components/GradientToggle.vue'
 import ImagePicker from './components/ImagePicker.vue'
 import MuseumLabel from './components/MuseumLabel.vue'
@@ -67,6 +96,21 @@ const renderStyle = ref<RenderStyle>('solid')
 const shape = ref<Shape>('circle')
 const canvasW = ref(480)
 const canvasH = ref(480)
+const dragState = ref<'none' | 'valid' | 'invalid'>('none')
+
+const dither = useTemplateRef<InstanceType<typeof DitherCanvas>>('dither')
+const exportModal = useTemplateRef<InstanceType<typeof ExportModal>>('exportModal')
+
+function openExport() {
+  const el = dither.value?.el
+  if (el)
+    exportModal.value?.open(el, renderStyle.value, {
+      content: content.value,
+      shape: shape.value,
+      text: text.value,
+      imageName: imageName.value,
+    })
+}
 
 const labelProps = computed(() => ({
   content: content.value,
@@ -80,9 +124,51 @@ const labelProps = computed(() => ({
   height: canvasH.value,
 }))
 
-function onPick(payload: { url: string; name: string }) {
-  imageSrc.value = payload.url
-  imageName.value = payload.name
+// What the canvas overlay shows: live drag feedback wins; otherwise a resting hint
+// while in image mode with nothing loaded yet.
+const overlay = computed<'hint' | 'valid' | 'invalid' | null>(() => {
+  if (dragState.value !== 'none') return dragState.value
+  return content.value === 'image' && !imageSrc.value ? 'hint' : null
+})
+
+let currentUrl: string | null = null
+function setImage(file: File) {
+  if (currentUrl) URL.revokeObjectURL(currentUrl)
+  currentUrl = URL.createObjectURL(file)
+  imageSrc.value = currentUrl
+  imageName.value = file.name
+}
+
+// Inspect the dragged payload without reading it (file contents aren't exposed
+// during dragover). Optimistic on unknown types so OS drags don't read invalid.
+function dragKind(dt: DataTransfer | null): 'valid' | 'invalid' {
+  const files = dt ? Array.from(dt.items).filter((i) => i.kind === 'file') : []
+  if (files.length === 0) return 'invalid'
+  return files.some((f) => f.type.startsWith('image/') || f.type === '') ? 'valid' : 'invalid'
+}
+
+// dragenter/leave fire per child element, so count nesting to avoid flicker.
+let dragDepth = 0
+function onDragEnter(e: DragEvent) {
+  dragDepth++
+  dragState.value = dragKind(e.dataTransfer)
+}
+function onDragOver(e: DragEvent) {
+  if (dragState.value === 'none') dragState.value = dragKind(e.dataTransfer)
+}
+function onDragLeave() {
+  if (--dragDepth <= 0) {
+    dragDepth = 0
+    dragState.value = 'none'
+  }
+}
+function onDrop(e: DragEvent) {
+  dragDepth = 0
+  dragState.value = 'none'
+  const file = e.dataTransfer?.files?.[0]
+  if (!file || !file.type.startsWith('image/')) return
+  content.value = 'image'
+  setImage(file)
 }
 
 function onResize(size: { w: number; h: number }) {

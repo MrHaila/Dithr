@@ -13,12 +13,13 @@
       :aria-checked="modelValue === opt.value"
       :tabindex="modelValue === opt.value ? 0 : -1"
       :title="opt.label"
-      class="fbrackets relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-xs font-semibold transition-colors focus:outline-none sm:h-10 sm:w-10"
-      :class="
+      class="fbrackets relative flex cursor-pointer items-center justify-center rounded-full text-xs font-semibold transition-colors focus:outline-none"
+      :class="[
+        size === 'sm' ? 'h-9 w-9' : 'h-11 w-11 sm:h-10 sm:w-10',
         modelValue === opt.value
           ? 'bg-zinc-800 text-gray-300 active:bg-zinc-900'
-          : 'text-zinc-900 hover:bg-zinc-800/10 active:bg-zinc-800/20'
-      "
+          : 'text-zinc-900 hover:bg-zinc-800/10 active:bg-zinc-800/20',
+      ]"
       @click="emit('update:modelValue', opt.value)"
       @keydown="onKeydown($event, i)"
     >
@@ -37,6 +38,8 @@ const props = defineProps<{
   modelValue: T
   options: Option[]
   label: string
+  // 'sm' shrinks the buttons for tighter contexts (e.g. the export dialog).
+  size?: 'md' | 'sm'
 }>()
 
 const emit = defineEmits<{

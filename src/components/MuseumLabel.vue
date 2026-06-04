@@ -32,6 +32,7 @@ import { computed, ref, useTemplateRef } from 'vue'
 import type { ContentType } from './ContentTypeToggle.vue'
 import type { DitherMode } from './DitherModeToggle.vue'
 import type { Gradient } from './GradientToggle.vue'
+import { artworkTitle } from './museumTitle'
 import type { RenderStyle } from './RenderStyleToggle.vue'
 import type { Shape } from './ShapePicker.vue'
 
@@ -66,24 +67,9 @@ function saveArtist() {
   localStorage.setItem(ARTIST_KEY, name)
 }
 
-// Curator-ish titles for the primitive shapes.
-const SHAPE_TITLES: Record<Shape, string> = {
-  circle: 'Tondo',
-  yinyang: 'Taijitu',
-  illuminati: 'Illuminatus',
-  pentagram: 'Pentaculum',
-}
-
-const title = computed(() => {
-  if (props.content === 'shape') return SHAPE_TITLES[props.shape]
-  if (props.content === 'text') {
-    const t = props.text.trim()
-    return t ? `“${t}”` : 'Untitled'
-  }
-  // Image: use the file name (extension stripped) as the title.
-  const name = props.imageName.replace(/\.[^.]+$/, '').trim()
-  return name || 'Readymade'
-})
+const title = computed(() =>
+  artworkTitle({ content: props.content, shape: props.shape, text: props.text, imageName: props.imageName }),
+)
 
 const medium = computed(() => {
   const parts = [props.mode === 'bayer' ? 'Bayer dithering' : 'Blue-noise dithering']
