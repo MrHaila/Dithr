@@ -1,5 +1,7 @@
 <template>
-  <div class="flex items-center gap-1 rounded-full bg-gray-400 p-1 shadow-lg">
+  <div
+    class="flex items-center gap-1 rounded-full border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 p-1 shadow-xl"
+  >
     <button
       v-for="opt in options"
       :key="String(opt.value)"
