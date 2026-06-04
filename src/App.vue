@@ -1,12 +1,15 @@
 <template>
   <div
-    class="flex min-h-dvh w-full flex-col items-center justify-start gap-3 bg-zinc-800 p-4 pb-40 sm:justify-center sm:gap-6 sm:p-0 sm:pb-0"
+    class="relative flex min-h-dvh w-full flex-col items-center justify-start gap-3 bg-zinc-800 p-4 pb-40 sm:justify-center sm:gap-6 sm:p-0 sm:pb-0"
     @dragenter.prevent="onDragEnter"
     @dragover.prevent="onDragOver"
     @dragleave="onDragLeave"
     @drop.prevent="onDrop"
   >
     <h1 class="sr-only">Dithr — dithering playground</h1>
+    <!-- Maker credit, top-left. z-0 keeps it under the canvas/controls (which paint
+         later or sit at z-10) without dropping behind the root's own background. -->
+    <MakerLabel class="absolute top-4 left-4 z-0" />
     <!-- w-fit shrinks this box to the canvas so the desktop label can hang off its right edge. -->
     <div class="relative w-fit">
       <DitherCanvas
@@ -41,31 +44,31 @@
       class="fixed inset-x-0 bottom-0 z-10 flex flex-wrap items-center justify-center gap-2 bg-zinc-800/85 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-sm sm:contents"
     >
       <div class="contents sm:fixed sm:bottom-4 sm:left-4 sm:flex sm:items-stretch sm:gap-2">
+        <ContentTypeToggle v-model="content" />
         <DitherModeToggle v-model="mode" />
         <GradientToggle v-model="gradient" />
         <RenderStyleToggle v-model="renderStyle" />
-        <!-- Export action. Joins the render-toggle cluster (bottom-left on desktop);
-             self-stretch matches the pill height in both the mobile bar and the desktop row. -->
-        <BevelButton class="self-stretch" aria-haspopup="dialog" @click="openExport">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12 3 v11" />
-            <path d="M8 7 l4 -4 l4 4" />
-            <path d="M6 11 H5.5 a2 2 0 0 0 -2 2 V19 a2 2 0 0 0 2 2 H18.5 a2 2 0 0 0 2 -2 V13 a2 2 0 0 0 -2 -2 H18" />
-          </svg>
-          Export
-        </BevelButton>
       </div>
-      <ContentTypeToggle v-model="content" class="sm:fixed sm:right-4 sm:bottom-4" />
+      <!-- Export action. Bottom-right corner on desktop, last in the mobile bar;
+           self-stretch matches the pill height in both layouts. -->
+      <BevelButton class="self-stretch sm:fixed sm:right-4 sm:bottom-4" aria-haspopup="dialog" @click="openExport">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 3 v11" />
+          <path d="M8 7 l4 -4 l4 4" />
+          <path d="M6 11 H5.5 a2 2 0 0 0 -2 2 V19 a2 2 0 0 0 2 2 H18.5 a2 2 0 0 0 2 -2 V13 a2 2 0 0 0 -2 -2 H18" />
+        </svg>
+        Export
+      </BevelButton>
     </div>
     <ExportModal ref="exportModal" />
   </div>
@@ -81,6 +84,7 @@ import DitherModeToggle, { type DitherMode } from './components/DitherModeToggle
 import ExportModal from './components/ExportModal.vue'
 import GradientToggle, { type Gradient } from './components/GradientToggle.vue'
 import ImagePicker from './components/ImagePicker.vue'
+import MakerLabel from './components/MakerLabel.vue'
 import MuseumLabel from './components/MuseumLabel.vue'
 import RenderStyleToggle, { type RenderStyle } from './components/RenderStyleToggle.vue'
 import ShapePicker, { type Shape } from './components/ShapePicker.vue'

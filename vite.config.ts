@@ -24,7 +24,7 @@ export default defineConfig({
     rules: {
       'import/no-unassigned-import': 'allow',
       // App.vue is the root aggregator; it legitimately wires up many child components.
-      'import/max-dependencies': ['error', { max: 12 }],
+      'import/max-dependencies': ['error', { max: 13 }],
       // DitherCanvas bundles the render loop, viewport-fit, drag/keyboard resize and dither math.
       'max-lines': ['error', { max: 360, skipBlankLines: true, skipComments: true }],
     },

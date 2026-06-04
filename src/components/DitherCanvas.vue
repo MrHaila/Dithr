@@ -278,8 +278,15 @@ function onHandlePointerDown(e: PointerEvent) {
 function onPointerMove(e: PointerEvent) {
   if (!dragging) return
   const { w, h } = availSize()
-  canvasW.value = Math.min(w, snapSize(startW + e.clientX - startX))
-  canvasH.value = Math.min(h, snapSize(startH + e.clientY - startY))
+  let nextW = Math.min(w, snapSize(startW + e.clientX - startX))
+  let nextH = Math.min(h, snapSize(startH + e.clientY - startY))
+  // Hold any modifier mid-drag to lock to a square — on-demand, no toggle.
+  // Drive both axes off the larger drag, then clamp to whichever bound is tighter.
+  if (e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) {
+    nextW = nextH = Math.min(w, h, Math.max(nextW, nextH))
+  }
+  canvasW.value = nextW
+  canvasH.value = nextH
 }
 
 function onPointerUp() {

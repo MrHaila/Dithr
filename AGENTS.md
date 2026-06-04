@@ -13,6 +13,7 @@ Small, fun dithering SPA. Pick shape/text/image (or drag-and-drop an image), pic
 - `src/components/BevelButton.vue` — reusable 3D-beveled pill button (`variant` default/primary); used by the export trigger and the modal actions.
 - `src/components/{ShapePicker,TextInput,ImagePicker}.vue` — content input panels below canvas; ImagePicker shows the chosen file name and emits the `File`.
 - `src/components/MuseumLabel.vue` — gallery "tombstone" label (title/medium/dims; editable artist).
+- `src/components/MakerLabel.vue` — maker-credit placard, top-left, absolute behind everything (App's `-z-10`); GitHub new-window link.
 - `src/components/museumTitle.ts` — shared `artworkTitle()` + `snakeCase()`; drives both the museum card title and the export filename so they never drift.
 - `src/components/ExportModal.vue` — `<dialog>` export modal: composites DitherCanvas' live bitmap to a PNG (`dithr_<snake(title)>.png`) with bg/frame/color/resolution options. Opened by the Export button in App.
 
