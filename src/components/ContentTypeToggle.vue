@@ -1,5 +1,10 @@
 <template>
-  <ToggleSwitch :model-value="modelValue" :options="options" @update:model-value="emit('update:modelValue', $event)">
+  <ToggleSwitch
+    label="Content type"
+    :model-value="modelValue"
+    :options="options"
+    @update:model-value="emit('update:modelValue', $event)"
+  >
     <template #default="{ option, active }">
       <svg v-if="option.value === 'shape'" width="20" height="20" viewBox="0 0 20 20">
         <g :fill="active ? '#e5e7eb' : '#27272a'">

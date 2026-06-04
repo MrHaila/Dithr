@@ -4,6 +4,8 @@ Small, fun dithering toy.
 
 Pick a shape, text, or image; pick Bayer or blue noise; pick gradient direction; render solid or outline. Play with the canvas size.
 
+Export when you find something cool!
+
 ## Stack
 
 Vue 3 + TypeScript + Tailwind 4, Vite+ toolchain (`vp` CLI).
@@ -22,3 +24,5 @@ CC BY 4.0
 ## Credits
 
 Blue noise texture (`src/assets/blue-noise-128.png`) from [Calinou/free-blue-noise-textures](https://github.com/Calinou/free-blue-noise-textures), licensed under CC0.
+
+Departure Mono font from [rektdeckard/departure-mono](https://github.com/rektdeckard/departure-mono), licensed under OFL-1.0.

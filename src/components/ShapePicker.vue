@@ -1,20 +1,28 @@
 <template>
   <div
+    role="radiogroup"
+    aria-label="Shape"
     class="flex items-center gap-2 rounded-3xl border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 p-2 shadow-xl"
   >
     <button
-      v-for="opt in options"
+      v-for="(opt, i) in options"
       :key="opt.value"
       type="button"
-      class="flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl transition-colors"
+      role="radio"
+      :aria-label="opt.label"
+      :aria-checked="modelValue === opt.value"
+      :tabindex="modelValue === opt.value ? 0 : -1"
+      :title="opt.label"
+      class="flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
       :class="
         modelValue === opt.value
           ? 'bg-zinc-800 text-gray-300 active:bg-zinc-900'
           : 'text-zinc-900 hover:bg-zinc-800/10 active:bg-zinc-800/20'
       "
       @click="emit('update:modelValue', opt.value)"
+      @keydown="onKeydown($event, i)"
     >
-      <svg width="32" height="32" viewBox="0 0 32 32">
+      <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
         <circle v-if="opt.value === 'circle'" cx="16" cy="16" r="10" fill="currentColor" />
         <g v-else-if="opt.value === 'yinyang'">
           <mask :id="`yy-${opt.value}-${modelValue === opt.value}`">
@@ -75,10 +83,25 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: Shape): void
 }>()
 
-const options: { value: Shape }[] = [
-  { value: 'circle' },
-  { value: 'yinyang' },
-  { value: 'illuminati' },
-  { value: 'pentagram' },
+const options: { value: Shape; label: string }[] = [
+  { value: 'circle', label: 'Circle' },
+  { value: 'yinyang', label: 'Yin-yang' },
+  { value: 'illuminati', label: 'Illuminati' },
+  { value: 'pentagram', label: 'Pentagram' },
 ]
+
+// Radiogroup keyboard model: arrows / Home / End move selection and roving focus.
+function onKeydown(e: KeyboardEvent, i: number) {
+  const n = options.length
+  let next = -1
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (i + 1) % n
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (i - 1 + n) % n
+  else if (e.key === 'Home') next = 0
+  else if (e.key === 'End') next = n - 1
+  else return
+  e.preventDefault()
+  const group = (e.currentTarget as HTMLElement).parentElement
+  emit('update:modelValue', options[next].value)
+  ;(group?.children[next] as HTMLElement | undefined)?.focus()
+}
 </script>

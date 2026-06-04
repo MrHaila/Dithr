@@ -1,5 +1,10 @@
 <template>
-  <ToggleSwitch :model-value="modelValue" :options="options" @update:model-value="emit('update:modelValue', $event)">
+  <ToggleSwitch
+    label="Gradient direction"
+    :model-value="modelValue"
+    :options="options"
+    @update:model-value="emit('update:modelValue', $event)"
+  >
     <template #default="{ option, active }">
       <svg v-if="option.value === 'top'" width="20" height="20" viewBox="0 0 20 20">
         <defs>
@@ -41,8 +46,8 @@ const emit = defineEmits<{
 }>()
 
 const options: { value: Gradient; label: string }[] = [
-  { value: 'top', label: 'Top' },
-  { value: 'bottom', label: 'Bot' },
-  { value: 'off', label: 'Off' },
+  { value: 'top', label: 'Gradient top' },
+  { value: 'bottom', label: 'Gradient bottom' },
+  { value: 'off', label: 'No gradient' },
 ]
 </script>

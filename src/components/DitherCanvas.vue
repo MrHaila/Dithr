@@ -7,27 +7,33 @@
         : 'border-4 border-gray-400'
     "
   >
-    <canvas ref="canvasRef" :width="canvasW" :height="canvasH" />
-    <svg
-      class="absolute right-3 bottom-3 cursor-se-resize opacity-40 transition-opacity hover:opacity-80"
-      width="20"
-      height="20"
-      viewBox="-2 -2 24 24"
-      @mousedown="onHandleMouseDown"
+    <canvas ref="canvasRef" :width="canvasW" :height="canvasH" class="block" role="img" :aria-label="ariaLabel" />
+    <button
+      type="button"
+      class="absolute right-1 bottom-1 flex h-11 w-11 cursor-se-resize touch-none items-center justify-center rounded-full opacity-60 transition-opacity select-none hover:opacity-90 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-800 sm:opacity-40"
+      :class="renderStyle === 'solid' ? 'text-[#282c33]' : 'text-gray-400'"
+      aria-label="Resize canvas — drag, or use arrow keys"
+      @pointerdown="onHandlePointerDown"
+      @pointermove="onPointerMove"
+      @pointerup="onPointerUp"
+      @pointercancel="onPointerUp"
+      @keydown="onHandleKey"
     >
-      <path
-        d="M 20 6 A 14 14 0 0 1 6 20"
-        fill="none"
-        :stroke="renderStyle === 'solid' ? '#282c33' : '#9ca3af'"
-        stroke-width="3.5"
-        stroke-linecap="round"
-      />
-    </svg>
+      <svg width="20" height="20" viewBox="-2 -2 24 24" aria-hidden="true">
+        <path
+          d="M 20 6 A 14 14 0 0 1 6 20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3.5"
+          stroke-linecap="round"
+        />
+      </svg>
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import blueNoiseUrl from '../assets/blue-noise-128.png'
 import type { ContentType } from './ContentTypeToggle.vue'
@@ -47,6 +53,10 @@ const props = defineProps<{
   shape: Shape
 }>()
 
+const emit = defineEmits<{
+  (e: 'resize', size: { w: number; h: number }): void
+}>()
+
 const PIXEL_SIZE = 4
 const MIN_SIZE = 80
 const BLUE_SIZE = 128
@@ -54,8 +64,45 @@ const BLUE_SIZE = 128
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const canvasW = ref(480)
 const canvasH = ref(480)
+// Once the user drags/keys the handle we stop auto-fitting on viewport changes.
+const userSized = ref(false)
 const blueTile = ref<Uint8Array | null>(null)
 const loadedImage = ref<HTMLImageElement | null>(null)
+
+const ariaLabel = computed(() => {
+  const what = props.content === 'shape' ? props.shape : props.content === 'text' ? `text “${props.text}”` : 'image'
+  return `Dithered ${what}, ${props.mode === 'bayer' ? 'Bayer' : 'blue noise'} pattern`
+})
+
+function snapSize(v: number): number {
+  return Math.max(MIN_SIZE, Math.round(v / PIXEL_SIZE) * PIXEL_SIZE)
+}
+
+// Hard ceiling for the width so a drag/keypress can never push the canvas wider
+// than the viewport (which would cause horizontal scrolling, especially on mobile).
+function maxCanvasW(): number {
+  const gutter = window.innerWidth < 640 ? 32 : 0
+  const avail = window.innerWidth - 48 - gutter
+  return Math.max(MIN_SIZE, Math.floor(avail / PIXEL_SIZE) * PIXEL_SIZE)
+}
+
+// Pick a default canvas size that fits the viewport, leaving room for the content
+// picker and the controls (bottom bar on mobile, fixed corners on desktop).
+function fitSize() {
+  if (userSized.value) return
+  const isMobile = window.innerWidth < 640
+  // canvas panel p-6, both sides
+  const panelPad = 48
+  // app p-4, both sides (mobile only)
+  const gutter = isMobile ? 32 : 0
+  // headroom for the picker, museum label, gaps and the two-row bottom control bar
+  const reservedH = isMobile ? 360 : 120
+  const availW = window.innerWidth - panelPad - gutter
+  const availH = window.innerHeight - panelPad - reservedH
+  const size = Math.min(480, snapSize(availW), snapSize(availH))
+  canvasW.value = size
+  canvasH.value = size
+}
 
 // prettier-ignore
 const BAYER_8 = [
@@ -200,24 +247,44 @@ let startY = 0
 let startW = 0
 let startH = 0
 
-function onHandleMouseDown(e: MouseEvent) {
+// Pointer events cover mouse, touch and pen with one path; capture keeps tracking
+// the drag even when the finger/cursor leaves the small handle.
+function onHandlePointerDown(e: PointerEvent) {
+  // ignore a second concurrent pointer mid-drag
+  if (dragging) return
   dragging = true
+  userSized.value = true
   startX = e.clientX
   startY = e.clientY
   startW = canvasW.value
   startH = canvasH.value
+  ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
   e.preventDefault()
 }
 
-function onMouseMove(e: MouseEvent) {
+function onPointerMove(e: PointerEvent) {
   if (!dragging) return
-  const snap = (v: number) => Math.round(v / PIXEL_SIZE) * PIXEL_SIZE
-  canvasW.value = Math.max(MIN_SIZE, snap(startW + e.clientX - startX))
-  canvasH.value = Math.max(MIN_SIZE, snap(startH + e.clientY - startY))
+  canvasW.value = Math.min(maxCanvasW(), snapSize(startW + e.clientX - startX))
+  canvasH.value = snapSize(startH + e.clientY - startY)
 }
 
-function onMouseUp() {
+function onPointerUp() {
   dragging = false
+}
+
+function onHandleKey(e: KeyboardEvent) {
+  const step = (e.shiftKey ? 5 : 1) * PIXEL_SIZE
+  let dw = 0
+  let dh = 0
+  if (e.key === 'ArrowRight') dw = step
+  else if (e.key === 'ArrowLeft') dw = -step
+  else if (e.key === 'ArrowDown') dh = step
+  else if (e.key === 'ArrowUp') dh = -step
+  else return
+  e.preventDefault()
+  userSized.value = true
+  canvasW.value = Math.min(maxCanvasW(), Math.max(MIN_SIZE, canvasW.value + dw))
+  canvasH.value = Math.max(MIN_SIZE, canvasH.value + dh)
 }
 
 watch(
@@ -234,15 +301,17 @@ watch(
   () => nextTick(render),
 )
 
+// Surface the live canvas size so the parent can show it on the museum label.
+watch([canvasW, canvasH], ([w, h]) => emit('resize', { w, h }), { immediate: true })
+
 onMounted(() => {
+  fitSize()
   loadBlueNoise()
   render()
-  document.addEventListener('mousemove', onMouseMove)
-  document.addEventListener('mouseup', onMouseUp)
+  window.addEventListener('resize', fitSize)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('mousemove', onMouseMove)
-  document.removeEventListener('mouseup', onMouseUp)
+  window.removeEventListener('resize', fitSize)
 })
 </script>

@@ -1,10 +1,10 @@
 <template>
   <label
-    class="flex cursor-pointer items-center gap-4 rounded-3xl border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 px-8 py-4 text-zinc-900 shadow-xl transition-colors select-none hover:border-t-gray-400 hover:border-b-gray-800 hover:bg-gray-500 active:border-t-gray-500 active:border-b-gray-800 active:bg-gray-600"
+    class="flex w-full max-w-xs cursor-pointer items-center justify-center gap-4 rounded-3xl border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 px-8 py-4 text-zinc-900 shadow-xl transition-colors select-none focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-zinc-900 hover:border-t-gray-400 hover:border-b-gray-800 hover:bg-gray-500 active:border-t-gray-500 active:border-b-gray-800 active:bg-gray-600 sm:w-auto sm:max-w-none"
   >
-    <span class="text-lg font-bold">Choose image</span>
-    <span v-if="fileName" class="text-sm opacity-70">{{ fileName }}</span>
-    <input ref="inputRef" type="file" accept="image/*,.svg" class="hidden" @change="onChange" />
+    <span class="shrink-0 text-lg font-bold">Choose image</span>
+    <span v-if="fileName" class="min-w-0 truncate text-sm opacity-70">{{ fileName }}</span>
+    <input ref="inputRef" type="file" accept="image/*,.svg" class="sr-only" @change="onChange" />
   </label>
 </template>
 
@@ -12,7 +12,7 @@
 import { ref } from 'vue'
 
 const emit = defineEmits<{
-  (e: 'pick', url: string): void
+  (e: 'pick', payload: { url: string; name: string }): void
 }>()
 
 const inputRef = ref<HTMLInputElement | null>(null)
@@ -26,6 +26,6 @@ function onChange(e: Event) {
   if (currentUrl) URL.revokeObjectURL(currentUrl)
   currentUrl = URL.createObjectURL(file)
   fileName.value = file.name
-  emit('pick', currentUrl)
+  emit('pick', { url: currentUrl, name: file.name })
 }
 </script>

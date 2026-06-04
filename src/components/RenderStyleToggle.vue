@@ -1,5 +1,10 @@
 <template>
-  <ToggleSwitch :model-value="modelValue" :options="options" @update:model-value="emit('update:modelValue', $event)">
+  <ToggleSwitch
+    label="Render style"
+    :model-value="modelValue"
+    :options="options"
+    @update:model-value="emit('update:modelValue', $event)"
+  >
     <template #default="{ option, active }">
       <svg v-if="option.value === 'solid'" width="20" height="20" viewBox="0 0 20 20">
         <rect x="3" y="3" width="14" height="14" rx="3" :fill="active ? '#e5e7eb' : '#27272a'" />
@@ -35,6 +40,6 @@ const emit = defineEmits<{
 
 const options: { value: RenderStyle; label: string }[] = [
   { value: 'solid', label: 'Solid' },
-  { value: 'outline', label: 'Out' },
+  { value: 'outline', label: 'Outline' },
 ]
 </script>

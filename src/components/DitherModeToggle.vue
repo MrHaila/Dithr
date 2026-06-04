@@ -1,5 +1,10 @@
 <template>
-  <ToggleSwitch :model-value="modelValue" :options="options" @update:model-value="emit('update:modelValue', $event)">
+  <ToggleSwitch
+    label="Dither pattern"
+    :model-value="modelValue"
+    :options="options"
+    @update:model-value="emit('update:modelValue', $event)"
+  >
     <template #default="{ option, active }">
       <svg v-if="option.value === 'bayer'" width="20" height="20" viewBox="0 0 20 20">
         <g :fill="active ? '#e5e7eb' : '#27272a'">
@@ -45,6 +50,6 @@ const emit = defineEmits<{
 
 const options: { value: DitherMode; label: string }[] = [
   { value: 'bayer', label: 'Bayer' },
-  { value: 'blue', label: 'Blue' },
+  { value: 'blue', label: 'Blue noise' },
 ]
 </script>

@@ -1,1 +1,41 @@
 @import 'tailwindcss';
+
+@font-face {
+  font-family: 'Departure Mono';
+  src:
+    url('./assets/DepartureMono-Regular.woff2') format('woff2'),
+    url('./assets/DepartureMono-Regular.woff') format('woff'),
+    url('./assets/DepartureMono-Regular.otf') format('opentype');
+  font-feature-settings: 'locl';
+}
+
+:root {
+  font-family: 'Departure Mono', monospace;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  /* Stop the page rubber-banding / pull-to-refresh while dragging the canvas. */
+  overscroll-behavior: none;
+}
+
+body {
+  /* Kill the grey tap flash on touch; stop iOS auto-zooming text on rotate. */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
