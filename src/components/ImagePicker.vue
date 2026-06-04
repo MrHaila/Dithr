@@ -1,6 +1,6 @@
 <template>
   <label
-    class="flex w-full max-w-xs cursor-pointer items-center justify-center gap-4 rounded-3xl border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 px-8 py-4 text-zinc-900 shadow-xl transition-colors select-none focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-zinc-900 hover:border-t-gray-400 hover:border-b-gray-800 hover:bg-gray-500 active:border-t-gray-500 active:border-b-gray-800 active:bg-gray-600 sm:w-auto sm:max-w-none"
+    class="fbrackets relative flex w-full max-w-xs cursor-pointer items-center justify-center gap-4 rounded-3xl border-t border-b-4 border-t-gray-300 border-b-gray-700 bg-gray-400 px-8 py-4 text-zinc-900 shadow-xl transition-colors select-none hover:border-t-gray-400 hover:border-b-gray-800 hover:bg-gray-500 active:border-t-gray-500 active:border-b-gray-800 active:bg-gray-600 sm:w-auto sm:max-w-none"
   >
     <span class="shrink-0 text-lg font-bold">Choose image</span>
     <span v-if="fileName" class="min-w-0 truncate text-sm opacity-70">{{ fileName }}</span>

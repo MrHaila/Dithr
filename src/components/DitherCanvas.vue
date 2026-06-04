@@ -10,7 +10,7 @@
     <canvas ref="canvasRef" :width="canvasW" :height="canvasH" class="block" role="img" :aria-label="ariaLabel" />
     <button
       type="button"
-      class="absolute right-1 bottom-1 flex h-11 w-11 cursor-se-resize touch-none items-center justify-center rounded-full opacity-60 transition-opacity select-none hover:opacity-90 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-800 sm:opacity-40"
+      class="fbrackets absolute right-1 bottom-1 flex h-11 w-11 cursor-se-resize touch-none items-center justify-center rounded-full opacity-60 transition-opacity select-none hover:opacity-90 focus:outline-none focus-visible:opacity-100 sm:opacity-40"
       :class="renderStyle === 'solid' ? 'text-[#282c33]' : 'text-gray-400'"
       aria-label="Resize canvas — drag, or use arrow keys"
       @pointerdown="onHandlePointerDown"
@@ -78,18 +78,10 @@ function snapSize(v: number): number {
   return Math.max(MIN_SIZE, Math.round(v / PIXEL_SIZE) * PIXEL_SIZE)
 }
 
-// Hard ceiling for the width so a drag/keypress can never push the canvas wider
-// than the viewport (which would cause horizontal scrolling, especially on mobile).
-function maxCanvasW(): number {
-  const gutter = window.innerWidth < 640 ? 32 : 0
-  const avail = window.innerWidth - 48 - gutter
-  return Math.max(MIN_SIZE, Math.floor(avail / PIXEL_SIZE) * PIXEL_SIZE)
-}
-
-// Pick a default canvas size that fits the viewport, leaving room for the content
-// picker and the controls (bottom bar on mobile, fixed corners on desktop).
-function fitSize() {
-  if (userSized.value) return
+// Hard ceiling per dimension so neither a drag/keypress nor a shrinking viewport
+// can push the canvas past the screen. Uses the visual viewport when available so
+// the mobile URL bar collapsing/expanding is accounted for.
+function availSize(): { w: number; h: number } {
   const isMobile = window.innerWidth < 640
   // canvas panel p-6, both sides
   const panelPad = 48
@@ -97,11 +89,32 @@ function fitSize() {
   const gutter = isMobile ? 32 : 0
   // headroom for the picker, museum label, gaps and the two-row bottom control bar
   const reservedH = isMobile ? 360 : 120
-  const availW = window.innerWidth - panelPad - gutter
-  const availH = window.innerHeight - panelPad - reservedH
-  const size = Math.min(480, snapSize(availW), snapSize(availH))
+  const vw = window.visualViewport?.width ?? window.innerWidth
+  const vh = window.visualViewport?.height ?? window.innerHeight
+  return {
+    w: snapSize(vw - panelPad - gutter),
+    h: snapSize(vh - panelPad - reservedH),
+  }
+}
+
+// Pick a default canvas size that fits the viewport (capped at the 480 design max).
+function fitSize() {
+  const { w, h } = availSize()
+  const size = Math.min(480, w, h)
   canvasW.value = size
   canvasH.value = size
+}
+
+// Run on every viewport change. Before the user has resized, keep auto-fitting.
+// Afterwards, respect their size but still clamp it down so it never overflows.
+function onViewportResize() {
+  if (!userSized.value) {
+    fitSize()
+    return
+  }
+  const { w, h } = availSize()
+  if (canvasW.value > w) canvasW.value = w
+  if (canvasH.value > h) canvasH.value = h
 }
 
 // prettier-ignore
@@ -264,8 +277,9 @@ function onHandlePointerDown(e: PointerEvent) {
 
 function onPointerMove(e: PointerEvent) {
   if (!dragging) return
-  canvasW.value = Math.min(maxCanvasW(), snapSize(startW + e.clientX - startX))
-  canvasH.value = snapSize(startH + e.clientY - startY)
+  const { w, h } = availSize()
+  canvasW.value = Math.min(w, snapSize(startW + e.clientX - startX))
+  canvasH.value = Math.min(h, snapSize(startH + e.clientY - startY))
 }
 
 function onPointerUp() {
@@ -283,8 +297,9 @@ function onHandleKey(e: KeyboardEvent) {
   else return
   e.preventDefault()
   userSized.value = true
-  canvasW.value = Math.min(maxCanvasW(), Math.max(MIN_SIZE, canvasW.value + dw))
-  canvasH.value = Math.max(MIN_SIZE, canvasH.value + dh)
+  const { w, h } = availSize()
+  canvasW.value = Math.min(w, Math.max(MIN_SIZE, canvasW.value + dw))
+  canvasH.value = Math.min(h, Math.max(MIN_SIZE, canvasH.value + dh))
 }
 
 watch(
@@ -308,10 +323,12 @@ onMounted(() => {
   fitSize()
   loadBlueNoise()
   render()
-  window.addEventListener('resize', fitSize)
+  window.addEventListener('resize', onViewportResize)
+  window.visualViewport?.addEventListener('resize', onViewportResize)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', fitSize)
+  window.removeEventListener('resize', onViewportResize)
+  window.visualViewport?.removeEventListener('resize', onViewportResize)
 })
 </script>

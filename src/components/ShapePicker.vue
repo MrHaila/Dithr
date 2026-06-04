@@ -13,7 +13,7 @@
       :aria-checked="modelValue === opt.value"
       :tabindex="modelValue === opt.value ? 0 : -1"
       :title="opt.label"
-      class="flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+      class="fbrackets relative flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl transition-colors focus:outline-none"
       :class="
         modelValue === opt.value
           ? 'bg-zinc-800 text-gray-300 active:bg-zinc-900'

@@ -29,6 +29,39 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/*
+  Keyboard focus indicator: retro corner brackets [ ] drawn as a pseudo-element
+  overlay. Two trigger branches — the element itself (buttons) and a focusable
+  descendant (label / wrapped <input>, since replaced/form elements can't host
+  ::after). Eight gradient slices = four L-shaped corners, scales to any size.
+*/
+/* No position here — it would override an element's own `absolute` (e.g. the
+   resize handle). Targets needing a positioning context add `relative`. */
+.fbrackets:focus-visible,
+.fbrackets:has(:focus-visible) {
+  outline: none;
+}
+
+.fbrackets:focus-visible::after,
+.fbrackets:has(:focus-visible)::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  pointer-events: none;
+  --c: #fbbf24;
+  --l: 12px;
+  --t: 2px;
+  background:
+    linear-gradient(var(--c), var(--c)) 0 0 / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 0 / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 0 / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 0 / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 100% / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 100% / var(--t) var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 100% / var(--l) var(--t) no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 100% / var(--t) var(--l) no-repeat;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
