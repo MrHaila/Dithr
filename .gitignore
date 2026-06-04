@@ -25,3 +25,6 @@ dist-ssr
 
 .screenshots
 .playwright-cli
+
+# Claude Code local settings
+.claude/settings.local.json
