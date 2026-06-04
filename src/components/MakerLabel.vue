@@ -35,5 +35,5 @@
 </template>
 
 <script setup lang="ts">
-const repo = 'https://github.com/teemuhaila/dithr'
+const repo = 'https://github.com/MrHaila/dithr'
 </script>
