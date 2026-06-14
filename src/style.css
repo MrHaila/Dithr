@@ -27,6 +27,9 @@ body {
   /* Kill the grey tap flash on touch; stop iOS auto-zooming text on rotate. */
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
+  /* App-like feel: disable double-tap-to-zoom. iOS Safari ignores the viewport
+     `user-scalable=no`, but honours touch-action for the double-tap gesture. */
+  touch-action: manipulation;
 }
 
 /*
