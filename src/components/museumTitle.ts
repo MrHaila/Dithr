@@ -26,7 +26,7 @@ export function artworkTitle(m: Readonly<ArtworkMeta>): string {
     return t ? `“${t}”` : 'Untitled'
   }
   // Image: use the file name (extension stripped) as the title.
-  const name = m.imageName.replace(/\.[^.]+$/, '').trim()
+  const name = m.imageName.replace(/\.[^.]+$/u, '').trim()
   return name || 'Empty Promises'
 }
 
@@ -34,6 +34,6 @@ export function artworkTitle(m: Readonly<ArtworkMeta>): string {
 export function snakeCase(s: string): string {
   return s
     .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/g, '_')
-    .replaceAll(/^_+|_+$/g, '')
+    .replaceAll(/[^a-z0-9]+/gu, '_')
+    .replaceAll(/^_+|_+$/gu, '')
 }
